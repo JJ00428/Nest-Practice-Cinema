@@ -35,10 +35,7 @@ export class User {
   @Prop()
   passwordResetExpires: Date;
 
-  @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Reservation' }],
-  })
-  reservations:[ mongoose.Types.ObjectId[]];
+
 
 //   async correctPassword(enteredPassword: string, password: string): Promise<boolean> {
 //     return await bcrypt.compare(enteredPassword, password);

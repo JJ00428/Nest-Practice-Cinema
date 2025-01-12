@@ -12,11 +12,11 @@ export class Film extends Document {
   @Prop({ required: true })
   title: string;
 
-  @Prop()
-  ratingsAverage: number;
+//   @Prop()
+//   ratingsAverage: number;
 
-  @Prop()
-  ratingsQuantity: number;
+//   @Prop()
+//   ratingsQuantity: number;
 
   @Prop()
   description: string;

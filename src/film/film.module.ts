@@ -19,7 +19,7 @@ import { ShowtimeSeats, ShowtimeSeatsSchema } from 'src/showtime-seats/entities/
     MongooseModule.forFeature([{ name: Hall.name, schema: HallSchema }]),
     MongooseModule.forFeature([{ name: ShowtimeSeats.name, schema: ShowtimeSeatsSchema }]),
     MongooseModule.forFeature([{ name: Reservation.name, schema: ReservationSchema }]),
-    MailModule, 
+    MailModule,
   ],
   controllers: [FilmController],
   providers: [FilmService,JwtAuthGuard,UserService],

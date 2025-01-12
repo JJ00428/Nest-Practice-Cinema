@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, Model, SchemaTypes } from 'mongoose';
 import { Cron } from '@nestjs/schedule';
 import { FilmService } from '../film/film.service';
 import { ShowtimeSeats, Seat } from './entities/showtime-seat.entity';
@@ -9,7 +9,7 @@ import { CreateShowtimeSeatDto } from './dto/create-showtime-seat.dto';
 import { UpdateShowtimeSeatDto } from './dto/update-showtime-seat.dto';
 import { Film, FilmDocument } from 'src/film/entities/film.entity';
 import { APIFeatures } from 'src/utils/APIFeatures';
-import { UserDocument } from 'src/user/entities/user.entity';
+import { User, UserDocument } from 'src/user/entities/user.entity';
 import { AppError } from 'src/common/app-error.exception';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 
@@ -21,6 +21,7 @@ export class ShowtimeSeatsService {
     @InjectModel(Hall.name) private readonly hallModel: Model<HallDocument>,
     private readonly filmService: FilmService,
     @InjectModel(Film.name) private readonly filmModel: Model<FilmDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Reservation.name)
     private readonly reservationModel: Model<Reservation>,
     @InjectConnection() private readonly connection: Connection,
@@ -257,7 +258,7 @@ export class ShowtimeSeatsService {
   }
 
   async BuyTickets(
-    user: UserDocument,
+    user: UserDocument | string,
     showtimeid: string,
     inputSeats: string[],
     glasses: boolean,
@@ -278,9 +279,9 @@ export class ShowtimeSeatsService {
       if (!showtime) {
         throw new NotFoundException(`Showtime not found 🗓️❌`);
       }
-      console.log(showtime.seats);
+      // console.log(showtime.seats);
 
-      const invalidSeats: string[] = [];
+      const seatsToRes: Seat[] = [];
 
       for (const seatNum of inputSeats) {
         // console.log(seatNum);
@@ -289,20 +290,22 @@ export class ShowtimeSeatsService {
         );
 
         // console.log(seatInShowtime);
-        
-        if (!seatInShowtime || seatInShowtime.isReserved) {
-          invalidSeats.push(seatNum);
+
+        if (!seatInShowtime) {
+          throw new AppError(
+            `Seat ${seatNum} doesn't exist 💺❌`,
+            400,
+          );
+        } else if (seatInShowtime.isReserved) {
+          throw new AppError(
+            `Seat ${seatNum} is already reserved 💺❌`,
+            400,
+          );
+        } else {
+          seatsToRes.push(seatInShowtime);
         }
       }
 
-      // console.log(invalidSeats);
-
-      if (invalidSeats.length > 0) {
-        throw new AppError(
-          `Invalid or already reserved seats: ${invalidSeats.join(', ')} 💺❌`,
-          400,
-        );
-      }
 
       showtime.seats = showtime.seats.map((seat) => {
         if (inputSeats.includes(seat.seatNum)) {
@@ -343,10 +346,14 @@ export class ShowtimeSeatsService {
           'This is a 3D film, please include glasses 🕶️🎬❗.  ';
       }
 
+      const userRes = await this.userModel.findById(user);
+
+      console.log(userRes);
+
       const reservation = new this.reservationModel({
-        user: user._id,
+        user: userRes._id,
         film: film._id,
-        seats: inputSeats,
+        seats: seatsToRes,
         hall: hall._id,
         totalPrice: price,
         glasses,

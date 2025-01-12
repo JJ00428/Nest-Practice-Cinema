@@ -2,7 +2,10 @@ import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { APIFeatures } from 'src/utils/APIFeatures';
-import { Reservation, ReservationDocument } from './entities/reservation.entity';
+import {
+  Reservation,
+  ReservationDocument,
+} from './entities/reservation.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Film, FilmDocument } from 'src/film/entities/film.entity';
@@ -17,21 +20,18 @@ export class ReservationService {
     @InjectModel(Film.name) private readonly filmModel: Model<FilmDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Hall.name) private readonly hallModel: Model<HallDocument>,
-    @InjectModel(Reservation.name) private readonly reservationModel: Model<ReservationDocument>,
+    @InjectModel(Reservation.name)
+    private readonly reservationModel: Model<ReservationDocument>,
     @InjectModel(ShowtimeSeats.name)
     private readonly showtimeSeatsModel: Model<ShowtimeSeats>,
   ) {}
 
   async findAll(queryString: any, res: any) {
-    const features = new APIFeatures(
-      this.reservationModel.find(),
-      queryString,
-    )
+    const features = new APIFeatures(this.reservationModel.find(), queryString)
       .filter()
       .sort()
       .limitFields()
       .paginate();
-
 
     const results = await features.query.exec();
 
@@ -59,7 +59,6 @@ export class ReservationService {
     });
   }
 
-
   async remove(id: string, res: any) {
     const reservation = await this.reservationModel
       .findByIdAndDelete(id)
@@ -78,15 +77,22 @@ export class ReservationService {
   }
 
   async getPastPurchases(userId: string, res: any) {
-    console.log(userId);
+    // console.log(userId);
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found 👤❌');
-    }  
+    }
 
     const pastPurchases = await this.reservationModel
-     .find({ user: user._id })
-     .sort({ createdAt: -1 })
-     .exec();
+      .find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    res.status(HttpStatus.OK).json({
+      status: 'success',
+      data: {
+        pastPurchases,
+      },
+    });
   }
 }

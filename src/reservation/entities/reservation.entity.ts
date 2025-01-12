@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types } from 'mongoose';
+import { Seat } from 'src/showtime-seats/entities/showtime-seat.entity';
 
 export type ReservationDocument = Reservation & Document;
 
@@ -20,7 +21,7 @@ export class Reservation extends Document {
 
 
   @Prop()
-  seats: [string];
+  seats: [Seat];
 
   @Prop({
     type: { type: mongoose.Schema.Types.ObjectId, ref: 'Hall' },
